@@ -1,0 +1,1097 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#02030a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AIRHEADS">
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%2302030a'/><g fill='none' stroke='%2339ff14' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'><ellipse cx='90' cy='88' rx='44' ry='58'/><ellipse cx='72' cy='86' rx='8' ry='14' fill='%2339ff14'/><ellipse cx='108' cy='86' rx='8' ry='14' fill='%2339ff14'/><path d='M74 130 Q90 138 106 130'/></g></svg>">
+<title>AIRHEADS // PB CONTROL</title>
+<style>
+  :root {
+    --bg: #02030a;
+    --bg-soft: #0a0d1c;
+    --neon: #39ff14;
+    --neon-dim: #1a4d3a;
+    --uv: #b537f2;
+    --cyan: #00f0ff;
+    --danger: #ff2e5b;
+    --ink: #c8ffd4;
+    --ink-dim: #6a8a72;
+    --font: 'SF Mono', 'JetBrains Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 16px;
+    min-height: 100vh;
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgba(57,255,20,0.04) 0 1px, transparent 1px 3px);
+    z-index: 100;
+    mix-blend-mode: screen;
+  }
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at 50% 0%, rgba(181,55,242,0.15), transparent 60%),
+                radial-gradient(ellipse at 50% 100%, rgba(57,255,20,0.08), transparent 70%);
+    z-index: 0;
+  }
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: max(env(safe-area-inset-top), 16px) 16px max(env(safe-area-inset-bottom), 24px);
+    display: flex; flex-direction: column; gap: 22px;
+  }
+  header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--neon-dim);
+  }
+  .brand {
+    font-size: 14px; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--neon);
+    text-shadow: 0 0 12px rgba(57,255,20,0.6);
+  }
+  .brand .glyph { color: var(--uv); margin-right: 6px; }
+  .conn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px;
+    border: 1px solid var(--neon-dim);
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--ink-dim);
+    background: rgba(10,13,28,0.6);
+  }
+  .conn .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--danger);
+    box-shadow: 0 0 10px var(--danger);
+    animation: pulse 1s infinite;
+  }
+  .conn[data-state="ok"] { color: var(--neon); border-color: var(--neon); }
+  .conn[data-state="ok"] .dot { background: var(--neon); box-shadow: 0 0 12px var(--neon); animation: none; }
+  .conn[data-state="connecting"] { color: var(--cyan); border-color: var(--cyan); }
+  .conn[data-state="connecting"] .dot { background: var(--cyan); box-shadow: 0 0 12px var(--cyan); }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  section { display: flex; flex-direction: column; gap: 10px; }
+  .label {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+  .label .val { color: var(--neon); text-shadow: 0 0 8px rgba(57,255,20,0.5); font-variant-numeric: tabular-nums; }
+
+  .slider-row {
+    position: relative;
+    padding: 16px 0;
+    touch-action: none;
+  }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%;
+    height: 56px;
+    background: transparent;
+    padding: 0; margin: 0;
+    display: block;
+  }
+  input[type=range]::-webkit-slider-runnable-track {
+    height: 14px;
+    background: linear-gradient(to right,
+      var(--neon) 0%,
+      var(--neon) var(--p, 50%),
+      #0e1a14 var(--p, 50%),
+      #0e1a14 100%);
+    border: 1px solid var(--neon-dim);
+    box-shadow: inset 0 0 10px rgba(57,255,20,0.2), 0 0 14px rgba(57,255,20,0.15);
+  }
+  input[type=range]::-moz-range-track {
+    height: 14px;
+    background: #0e1a14;
+    border: 1px solid var(--neon-dim);
+  }
+  input[type=range]::-moz-range-progress {
+    height: 14px;
+    background: var(--neon);
+    box-shadow: 0 0 12px rgba(57,255,20,0.6);
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #143820, #02030a 70%);
+    border: 2px solid var(--neon);
+    box-shadow: 0 0 20px var(--neon), inset 0 0 14px rgba(57,255,20,0.4);
+    margin-top: -21px;
+    cursor: grab;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #143820, #02030a 70%);
+    border: 2px solid var(--neon);
+    box-shadow: 0 0 20px var(--neon), inset 0 0 14px rgba(57,255,20,0.4);
+  }
+  input[type=range]:active::-webkit-slider-thumb {
+    box-shadow: 0 0 32px var(--neon), inset 0 0 14px rgba(57,255,20,0.6);
+    cursor: grabbing;
+  }
+
+  .slider-row.tint-r input[type=range]::-webkit-slider-runnable-track {
+    background: linear-gradient(to right, var(--danger) 0%, var(--danger) var(--p, 50%), #1a0a10 var(--p, 50%), #1a0a10 100%);
+    border-color: #5a1830;
+  }
+  .slider-row.tint-r input[type=range]::-webkit-slider-thumb {
+    border-color: var(--danger);
+    box-shadow: 0 0 20px var(--danger), inset 0 0 14px rgba(255,46,91,0.4);
+  }
+  .slider-row.tint-g input[type=range]::-webkit-slider-runnable-track {
+    background: linear-gradient(to right, var(--neon) 0%, var(--neon) var(--p, 50%), #0e1a14 var(--p, 50%), #0e1a14 100%);
+  }
+  .slider-row.tint-b input[type=range]::-webkit-slider-runnable-track {
+    background: linear-gradient(to right, var(--cyan) 0%, var(--cyan) var(--p, 50%), #0a141a var(--p, 50%), #0a141a 100%);
+    border-color: #185060;
+  }
+  .slider-row.tint-b input[type=range]::-webkit-slider-thumb {
+    border-color: var(--cyan);
+    box-shadow: 0 0 20px var(--cyan), inset 0 0 14px rgba(0,240,255,0.4);
+  }
+
+  select {
+    -webkit-appearance: none; appearance: none;
+    width: 100%;
+    background: var(--bg-soft);
+    color: var(--neon);
+    border: 1px solid var(--neon-dim);
+    padding: 18px 44px 18px 16px;
+    font-family: var(--font);
+    font-size: 16px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background-image: linear-gradient(45deg, transparent 50%, var(--neon) 50%),
+                      linear-gradient(135deg, var(--neon) 50%, transparent 50%);
+    background-position: calc(100% - 22px) 50%, calc(100% - 14px) 50%;
+    background-size: 8px 8px, 8px 8px;
+    background-repeat: no-repeat;
+    text-shadow: 0 0 8px rgba(57,255,20,0.4);
+  }
+  select:focus { outline: none; border-color: var(--neon); box-shadow: 0 0 16px rgba(57,255,20,0.4); }
+
+  .switch-btn {
+    width: 100%;
+    padding: 18px;
+    background: var(--bg-soft);
+    border: 1px solid var(--neon-dim);
+    color: var(--ink-dim);
+    font-family: var(--font);
+    font-size: 14px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 120ms;
+  }
+  .switch-btn[aria-pressed="true"] {
+    color: var(--neon);
+    border-color: var(--neon);
+    box-shadow: 0 0 20px rgba(57,255,20,0.3), inset 0 0 20px rgba(57,255,20,0.1);
+    text-shadow: 0 0 8px rgba(57,255,20,0.6);
+  }
+
+  .color-pad {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    border: 1px solid var(--neon-dim);
+    background:
+      linear-gradient(to bottom, transparent, #02030a),
+      linear-gradient(to right,
+        hsl(0,100%,50%), hsl(60,100%,50%), hsl(120,100%,50%),
+        hsl(180,100%,50%), hsl(240,100%,50%), hsl(300,100%,50%), hsl(360,100%,50%));
+    touch-action: none;
+    cursor: crosshair;
+    box-shadow: inset 0 0 24px rgba(0,0,0,0.6), 0 0 14px rgba(57,255,20,0.1);
+  }
+  .color-pad .cursor {
+    position: absolute;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 8px rgba(0,0,0,0.9), inset 0 0 6px rgba(0,0,0,0.8);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    background: transparent;
+  }
+  .swatch {
+    display: inline-block;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 1px solid var(--neon-dim);
+    vertical-align: middle;
+    margin-left: 8px;
+    box-shadow: 0 0 8px var(--swatch-glow, transparent);
+  }
+  .vibes {
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .vibe {
+    flex: 1 1 auto;
+    min-width: 80px;
+    padding: 14px 12px;
+    background: var(--bg-soft);
+    border: 1px solid var(--cyan);
+    color: var(--cyan);
+    font-family: var(--font);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    text-shadow: 0 0 6px rgba(0,240,255,0.4);
+    box-shadow: inset 0 0 12px rgba(0,240,255,0.05);
+  }
+  .vibe:active {
+    background: rgba(0,240,255,0.12);
+    box-shadow: 0 0 16px rgba(0,240,255,0.4), inset 0 0 12px rgba(0,240,255,0.2);
+  }
+  .presets {
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .preset {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 16px;
+    background: var(--bg-soft);
+    border: 1px solid var(--neon-dim);
+    color: var(--ink-dim);
+    font-family: var(--font);
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    min-height: 44px;
+  }
+  .preset.active {
+    color: var(--uv);
+    border-color: var(--uv);
+    text-shadow: 0 0 8px rgba(181,55,242,0.6);
+    box-shadow: 0 0 14px rgba(181,55,242,0.2);
+  }
+  .preset .x {
+    color: var(--ink-dim);
+    font-size: 14px;
+    padding: 0 2px;
+  }
+  .preset .x:hover { color: var(--danger); }
+  .preset.new { color: var(--neon); border-style: dashed; }
+
+  .controls-area {
+    display: flex; flex-direction: column; gap: 18px;
+    padding-top: 6px;
+  }
+  .empty {
+    padding: 20px;
+    text-align: center;
+    color: var(--ink-dim);
+    border: 1px dashed var(--neon-dim);
+    font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;
+  }
+  .group-title {
+    font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--uv);
+    padding: 4px 0; margin-top: 6px;
+    border-bottom: 1px dashed rgba(181,55,242,0.3);
+  }
+  footer {
+    text-align: center;
+    font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--ink-dim);
+    padding-top: 8px;
+    border-top: 1px dashed var(--neon-dim);
+    opacity: 0.6;
+  }
+  dialog {
+    border: 1px solid var(--neon);
+    background: var(--bg-soft);
+    color: var(--ink);
+    font-family: var(--font);
+    padding: 20px;
+    box-shadow: 0 0 40px rgba(57,255,20,0.3);
+    max-width: 90vw;
+  }
+  dialog::backdrop { background: rgba(2,3,10,0.85); }
+  dialog input[type=text] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--neon-dim);
+    color: var(--neon);
+    font-family: var(--font);
+    font-size: 16px;
+    padding: 12px;
+    margin: 12px 0;
+  }
+  dialog .dlg-row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; }
+  dialog button {
+    background: var(--bg);
+    border: 1px solid var(--neon-dim);
+    color: var(--ink);
+    font-family: var(--font);
+    padding: 10px 18px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  dialog button.ok { color: var(--neon); border-color: var(--neon); }
+  dialog button.warn { color: var(--danger); border-color: var(--danger); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="brand"><span class="glyph">◉</span>AIRHEADS</div>
+    <div class="conn" id="conn" data-state="connecting">
+      <span class="dot"></span><span id="connText">CONNECTING</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="label"><span>BRIGHTNESS</span><span class="val" id="brVal">—</span></div>
+    <div class="slider-row" id="brRow">
+      <input type="range" id="brSlider" min="0" max="1" step="0.001" value="0.5">
+    </div>
+  </section>
+
+  <section>
+    <div class="label"><span>PATTERN</span></div>
+    <select id="patternSel"><option>— loading —</option></select>
+  </section>
+
+  <section>
+    <div class="label"><span>VIBES</span></div>
+    <div class="vibes" id="vibes"></div>
+  </section>
+
+  <section>
+    <div class="label"><span>PRESETS</span><span class="val" id="presetCount"></span></div>
+    <div class="presets" id="presets"></div>
+  </section>
+
+  <section>
+    <div class="label"><span>CONTROLS</span></div>
+    <div class="controls-area" id="controls"><div class="empty">— no pattern —</div></div>
+  </section>
+
+  <footer id="footer">// PB @ — //</footer>
+</main>
+
+<dialog id="presetDlg">
+  <div style="font-size:12px;letter-spacing:0.25em;text-transform:uppercase;color:var(--neon)">Save preset</div>
+  <input type="text" id="presetName" maxlength="20" placeholder="name" autocomplete="off">
+  <div class="dlg-row">
+    <button id="dlgCancel">Cancel</button>
+    <button id="dlgSave" class="ok">Save</button>
+  </div>
+</dialog>
+
+<script>
+(() => {
+  'use strict';
+
+  // Host resolution: ?host=<ip> wins; else if served from the PB itself, use its hostname;
+  // else fall back to the hardcoded LAN address.
+  const PB_DEFAULT = '10.0.0.178';
+  const qsHost = new URLSearchParams(location.search).get('host');
+  const sameOriginIsPB = location.hostname === PB_DEFAULT;
+  const PB_HOST = qsHost || (sameOriginIsPB ? location.hostname : PB_DEFAULT);
+  const WS_URL = `ws://${PB_HOST}:81`;
+  const STORAGE_KEY = 'airheads.presets.v1';
+
+  // ---------------- PixelblazeClient ----------------
+  class PixelblazeClient {
+    constructor(url) {
+      this.url = url;
+      this.ws = null;
+      this.pending = []; // { match: (msg) => bool, resolve, reject, timeout }
+      this.binBuf = {};  // type -> array of Uint8Array chunks
+      this.onActiveProgram = null;
+      this.onConnState = null;
+      this.onConfig = null;
+      this._reconnectMs = 800;
+      this._connect();
+    }
+
+    _connect() {
+      this._setState('connecting');
+      try { this.ws = new WebSocket(this.url); }
+      catch (e) { return this._scheduleReconnect(); }
+      this.ws.binaryType = 'arraybuffer';
+      this.ws.onopen = () => {
+        this._reconnectMs = 800;
+        this._setState('ok');
+      };
+      this.ws.onclose = () => { this._failPending('disconnected'); this._scheduleReconnect(); };
+      this.ws.onerror = () => { /* close will follow */ };
+      this.ws.onmessage = (ev) => this._onMessage(ev);
+    }
+
+    _scheduleReconnect() {
+      this._setState('off');
+      setTimeout(() => this._connect(), this._reconnectMs);
+      this._reconnectMs = Math.min(this._reconnectMs * 1.6, 8000);
+    }
+
+    _setState(s) { if (this.onConnState) this.onConnState(s); }
+
+    _onMessage(ev) {
+      if (typeof ev.data === 'string') return this._onText(ev.data);
+      this._onBinary(new Uint8Array(ev.data));
+    }
+
+    _onText(s) {
+      let msg; try { msg = JSON.parse(s); } catch { return; }
+      // Route unsolicited frames first
+      if (msg.activeProgram && this.onActiveProgram) this.onActiveProgram(msg.activeProgram);
+      if (msg.brightness !== undefined && this.onConfig) this.onConfig(msg);
+      // Match against pending
+      for (let i = 0; i < this.pending.length; i++) {
+        const p = this.pending[i];
+        if (p.match(msg)) {
+          this.pending.splice(i, 1);
+          clearTimeout(p.timeout);
+          p.resolve(msg);
+          return;
+        }
+      }
+    }
+
+    _onBinary(view) {
+      if (view.length < 2) return;
+      const type = view[0];
+      if (type === 0x05) return; // preview pixel frame -> ignore
+      const flags = view[1];
+      const isFirst = flags & 1;
+      const isLast = flags & 4;
+      const payload = view.slice(2);
+      if (isFirst || !this.binBuf[type]) this.binBuf[type] = [];
+      this.binBuf[type].push(payload);
+      if (!isLast) return;
+      // assemble
+      const chunks = this.binBuf[type];
+      delete this.binBuf[type];
+      const total = chunks.reduce((n, c) => n + c.length, 0);
+      const buf = new Uint8Array(total);
+      let off = 0;
+      for (const c of chunks) { buf.set(c, off); off += c.length; }
+      // resolve any pending request matching this binary type
+      for (let i = 0; i < this.pending.length; i++) {
+        const p = this.pending[i];
+        if (p.binType === type) {
+          this.pending.splice(i, 1);
+          clearTimeout(p.timeout);
+          p.resolve(buf);
+          return;
+        }
+      }
+    }
+
+    _send(obj) {
+      if (!this.ws || this.ws.readyState !== 1) throw new Error('not connected');
+      this.ws.send(JSON.stringify(obj));
+    }
+
+    _request(payload, { match, binType, timeoutMs = 4000 } = {}) {
+      return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          const i = this.pending.indexOf(entry);
+          if (i >= 0) this.pending.splice(i, 1);
+          reject(new Error('request timeout'));
+        }, timeoutMs);
+        const entry = { match: match || (() => false), binType, resolve, reject, timeout };
+        this.pending.push(entry);
+        try { this._send(payload); } catch (e) { clearTimeout(timeout); const i = this.pending.indexOf(entry); if (i>=0) this.pending.splice(i,1); reject(e); }
+      });
+    }
+
+    _failPending(reason) {
+      const arr = this.pending; this.pending = [];
+      for (const p of arr) { clearTimeout(p.timeout); p.reject(new Error(reason)); }
+    }
+
+    // ---- public API ----
+    listPatterns() {
+      return this._request({ listPrograms: true }, { binType: 0x07, timeoutMs: 8000 })
+        .then(buf => {
+          const text = new TextDecoder().decode(buf);
+          return text.split('\n').filter(Boolean).map(line => {
+            const tab = line.indexOf('\t');
+            return tab < 0 ? { id: line, name: line } : { id: line.slice(0, tab), name: line.slice(tab + 1) };
+          });
+        });
+    }
+
+    getConfig() {
+      // PB sends multiple frames in response; we resolve on the one that has activeProgram
+      return this._request({ getConfig: true }, { match: m => m.activeProgram !== undefined });
+    }
+
+    activate(id) {
+      return this._request({ activeProgramId: id, save: false },
+        { match: m => m.activeProgram && m.activeProgram.activeProgramId === id });
+    }
+
+    getControls(id) {
+      return this._request({ getControls: id },
+        { match: m => m.controls !== undefined && m.activeProgramId === undefined });
+    }
+
+    setControls(obj) {
+      // fire and forget; PB acks but we don't await for slider responsiveness
+      try { this._send({ setControls: obj, save: false }); } catch {}
+    }
+
+    setBrightness(v) {
+      try { this._send({ brightness: v, save: false }); } catch {}
+    }
+  }
+
+  // ---------------- Preset store ----------------
+  const Store = {
+    load() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+      catch { return {}; }
+    },
+    save(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); },
+    forPattern(id) {
+      const all = this.load();
+      return all[id] || {};
+    },
+    setPreset(patternId, name, snapshot) {
+      const all = this.load();
+      all[patternId] = all[patternId] || {};
+      all[patternId][name] = snapshot;
+      this.save(all);
+    },
+    deletePreset(patternId, name) {
+      const all = this.load();
+      if (!all[patternId]) return;
+      delete all[patternId][name];
+      if (Object.keys(all[patternId]).length === 0) delete all[patternId];
+      this.save(all);
+    }
+  };
+
+  // ---------------- Built-in vibes ----------------
+  // Each vibe lists many possible slider names; only matching ones on the active pattern apply.
+  const VIBES = [
+    { name: 'CHILL',  controls: {
+        sliderSpeed: 0.15, sliderExpression: 0.25, sliderTailLength: 0.85,
+        sliderColorDiversity: 0.3, sliderFade: 0.85, sliderDensity: 0.3,
+        sliderIntensity: 0.3, sliderSaturation: 0.7 } },
+    { name: 'GLIDE',  controls: {
+        sliderSpeed: 0.35, sliderExpression: 0.5, sliderTailLength: 0.65,
+        sliderColorDiversity: 0.6, sliderFade: 0.6, sliderDensity: 0.5,
+        sliderIntensity: 0.55, sliderSaturation: 0.85 } },
+    { name: 'AMPED',  controls: {
+        sliderSpeed: 0.8, sliderExpression: 0.85, sliderTailLength: 0.3,
+        sliderColorDiversity: 0.55, sliderFade: 0.3, sliderDensity: 0.8,
+        sliderIntensity: 0.85, sliderSaturation: 1.0 } },
+    { name: 'PSYCHO', controls: {
+        sliderSpeed: 1.0, sliderExpression: 0.95, sliderTailLength: 0.12,
+        sliderColorDiversity: 1.0, sliderFade: 0.1, sliderDensity: 1.0,
+        sliderIntensity: 1.0, sliderSaturation: 1.0 } },
+  ];
+
+  // ---------------- App state + UI ----------------
+  const state = {
+    patterns: [],         // [{id, name}]
+    activeId: null,
+    activeName: null,
+    controls: {},         // { name: value }
+    brightness: 0.5,
+    pendingControls: {},  // throttled outbound
+    rafScheduled: false,
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const conn = $('conn'), connText = $('connText');
+  const brSlider = $('brSlider'), brVal = $('brVal'), brRow = $('brRow');
+  const patternSel = $('patternSel');
+  const presetsEl = $('presets'), presetCount = $('presetCount');
+  const vibesEl = $('vibes');
+  const controlsEl = $('controls');
+  const presetDlg = $('presetDlg'), presetName = $('presetName');
+
+  document.getElementById('footer').textContent = `// PB @ ${PB_HOST} //`;
+  const pb = new PixelblazeClient(WS_URL);
+
+  pb.onConnState = (s) => {
+    conn.dataset.state = s === 'ok' ? 'ok' : (s === 'connecting' ? 'connecting' : 'off');
+    connText.textContent = s === 'ok' ? 'LINK OK' : (s === 'connecting' ? 'CONNECTING' : 'NO LINK');
+    if (s === 'ok') bootstrap();
+  };
+
+  pb.onActiveProgram = (ap) => {
+    // Unsolicited update: pattern changed, or controls bumped externally
+    if (ap.activeProgramId && ap.activeProgramId !== state.activeId) {
+      state.activeId = ap.activeProgramId;
+      const p = state.patterns.find(x => x.id === ap.activeProgramId);
+      state.activeName = p ? p.name : ap.activeProgramId;
+      patternSel.value = state.activeId;
+      if (ap.controls) { state.controls = { ...ap.controls }; renderControls(); renderVibes(); }
+      else refreshControls();
+      renderPresets();
+    } else if (ap.controls) {
+      state.controls = { ...ap.controls };
+      renderControls();
+      renderVibes();
+    }
+  };
+
+  pb.onConfig = (cfg) => {
+    if (typeof cfg.brightness === 'number') {
+      state.brightness = cfg.brightness;
+      brSlider.value = String(cfg.brightness);
+      updateSliderFill(brSlider);
+      brVal.textContent = fmt(cfg.brightness);
+    }
+  };
+
+  async function bootstrap() {
+    try {
+      const patterns = await pb.listPatterns();
+      state.patterns = patterns.sort((a, b) => a.name.localeCompare(b.name));
+      patternSel.innerHTML = '';
+      for (const p of state.patterns) {
+        const opt = document.createElement('option');
+        opt.value = p.id; opt.textContent = p.name;
+        patternSel.appendChild(opt);
+      }
+      const cfg = await pb.getConfig();
+      if (cfg.activeProgram) {
+        state.activeId = cfg.activeProgram.activeProgramId;
+        const p = state.patterns.find(x => x.id === state.activeId);
+        state.activeName = p ? p.name : state.activeId;
+        patternSel.value = state.activeId;
+        state.controls = { ...(cfg.activeProgram.controls || {}) };
+        renderControls();
+        renderVibes();
+        renderPresets();
+      }
+      if (typeof cfg.brightness === 'number') {
+        state.brightness = cfg.brightness;
+        brSlider.value = String(cfg.brightness);
+        updateSliderFill(brSlider);
+        brVal.textContent = fmt(cfg.brightness);
+      }
+    } catch (e) {
+      controlsEl.innerHTML = `<div class="empty">${escapeHtml(String(e.message || e))}</div>`;
+    }
+  }
+
+  async function refreshControls() {
+    if (!state.activeId) return;
+    try {
+      const r = await pb.getControls(state.activeId);
+      state.controls = { ...(r.controls || {}) };
+      renderControls();
+      renderVibes();
+    } catch {}
+  }
+
+  // ---- rendering ----
+  function fmt(v) {
+    if (typeof v === 'number') return v.toFixed(3);
+    if (Array.isArray(v)) return v.map(x => x.toFixed(2)).join(' ');
+    return String(v);
+  }
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  }
+  function prettyName(raw) {
+    // sliderColorDiversity -> COLOR DIVERSITY
+    return raw
+      .replace(/^(slider|switch|rgbPicker|hsvPicker)/, '')
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/^./, c => c.toUpperCase())
+      .toUpperCase();
+  }
+  function controlType(name) {
+    if (name.startsWith('slider')) return 'slider';
+    if (name.startsWith('switch')) return 'switch';
+    if (name.startsWith('rgbPicker')) return 'rgb';
+    if (name.startsWith('hsvPicker')) return 'hsv';
+    return null;
+  }
+  function updateSliderFill(input) {
+    const pct = (parseFloat(input.value) * 100).toFixed(2) + '%';
+    input.style.setProperty('--p', pct);
+  }
+
+  function renderControls() {
+    controlsEl.innerHTML = '';
+    const names = Object.keys(state.controls);
+    if (names.length === 0) {
+      controlsEl.innerHTML = '<div class="empty">— no controls for this pattern —</div>';
+      return;
+    }
+    for (const name of names) {
+      const t = controlType(name);
+      const v = state.controls[name];
+      if (t === 'slider') controlsEl.appendChild(renderSlider(name, v));
+      else if (t === 'switch') controlsEl.appendChild(renderSwitch(name, v));
+      else if (t === 'rgb') controlsEl.appendChild(renderColor(name, v, true));
+      else if (t === 'hsv') controlsEl.appendChild(renderColor(name, v, false));
+      else controlsEl.appendChild(renderSlider(name, typeof v === 'number' ? v : 0.5));
+    }
+  }
+
+  function makeLabel(text, valEl) {
+    const lbl = document.createElement('div');
+    lbl.className = 'label';
+    const left = document.createElement('span'); left.textContent = text;
+    lbl.appendChild(left); lbl.appendChild(valEl);
+    return lbl;
+  }
+
+  function renderSlider(name, value) {
+    const wrap = document.createElement('div');
+    const val = document.createElement('span'); val.className = 'val'; val.textContent = fmt(value);
+    wrap.appendChild(makeLabel(prettyName(name), val));
+    const row = document.createElement('div'); row.className = 'slider-row';
+    const input = document.createElement('input');
+    input.type = 'range'; input.min = '0'; input.max = '1'; input.step = '0.001';
+    input.value = String(value);
+    updateSliderFill(input);
+    input.addEventListener('input', () => {
+      const v = parseFloat(input.value);
+      state.controls[name] = v;
+      val.textContent = fmt(v);
+      updateSliderFill(input);
+      queueControl(name, v);
+    });
+    row.appendChild(input);
+    wrap.appendChild(row);
+    return wrap;
+  }
+
+  function renderSwitch(name, value) {
+    const wrap = document.createElement('div');
+    const val = document.createElement('span'); val.className = 'val'; val.textContent = value ? 'ON' : 'OFF';
+    wrap.appendChild(makeLabel(prettyName(name), val));
+    const btn = document.createElement('button');
+    btn.className = 'switch-btn';
+    btn.setAttribute('aria-pressed', String(!!value));
+    btn.textContent = value ? 'ENABLED' : 'DISABLED';
+    btn.addEventListener('click', () => {
+      const next = !(state.controls[name]);
+      state.controls[name] = next;
+      btn.setAttribute('aria-pressed', String(next));
+      btn.textContent = next ? 'ENABLED' : 'DISABLED';
+      val.textContent = next ? 'ON' : 'OFF';
+      queueControl(name, next);
+    });
+    wrap.appendChild(btn);
+    return wrap;
+  }
+
+  // --- color conversions (all values 0..1) ---
+  function hsvToRgb(h, s, v) {
+    h = ((h % 1) + 1) % 1;
+    const i = Math.floor(h * 6);
+    const f = h * 6 - i;
+    const p = v * (1 - s);
+    const q = v * (1 - f * s);
+    const t = v * (1 - (1 - f) * s);
+    switch (i % 6) {
+      case 0: return [v, t, p];
+      case 1: return [q, v, p];
+      case 2: return [p, v, t];
+      case 3: return [p, q, v];
+      case 4: return [t, p, v];
+      case 5: return [v, p, q];
+    }
+    return [0, 0, 0];
+  }
+  function rgbToHsv(r, g, b) {
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    const d = max - min;
+    const v = max;
+    const s = max === 0 ? 0 : d / max;
+    let h = 0;
+    if (d !== 0) {
+      if (max === r) h = ((g - b) / d) % 6;
+      else if (max === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h /= 6;
+      if (h < 0) h += 1;
+    }
+    return [h, s, v];
+  }
+  function rgbCss(rgb) {
+    return `rgb(${(rgb[0]*255)|0},${(rgb[1]*255)|0},${(rgb[2]*255)|0})`;
+  }
+
+  function renderColor(name, value, isRgb) {
+    const wrap = document.createElement('div');
+    let h, s, v;
+    if (isRgb) {
+      const rgb = Array.isArray(value) ? value : [1, 0, 0];
+      [h, s, v] = rgbToHsv(rgb[0] || 0, rgb[1] || 0, rgb[2] || 0);
+      if (v === 0) v = 1; // avoid stuck-at-black where H/S can't be picked
+    } else {
+      const hsv = Array.isArray(value) ? value : [0, 1, 1];
+      h = hsv[0] || 0; s = hsv[1] != null ? hsv[1] : 1; v = hsv[2] != null ? hsv[2] : 1;
+    }
+
+    const valEl = document.createElement('span'); valEl.className = 'val';
+    const swatch = document.createElement('span'); swatch.className = 'swatch';
+    const lblText = isRgb ? prettyName(name) : prettyName(name);
+    const lbl = makeLabel(lblText, valEl);
+    lbl.querySelector('span').appendChild(swatch);
+    wrap.appendChild(lbl);
+
+    const pad = document.createElement('div'); pad.className = 'color-pad';
+    const cursor = document.createElement('div'); cursor.className = 'cursor';
+    pad.appendChild(cursor);
+    wrap.appendChild(pad);
+
+    const vLabel = document.createElement('div'); vLabel.className = 'label';
+    vLabel.style.fontSize = '10px';
+    const vLbl = document.createElement('span'); vLbl.textContent = 'BRIGHTNESS'; vLbl.style.opacity = '0.7';
+    const vVal = document.createElement('span'); vVal.className = 'val';
+    vLabel.appendChild(vLbl); vLabel.appendChild(vVal);
+    wrap.appendChild(vLabel);
+    const vRow = document.createElement('div'); vRow.className = 'slider-row';
+    const vInput = document.createElement('input');
+    vInput.type = 'range'; vInput.min = '0'; vInput.max = '1'; vInput.step = '0.001';
+    vInput.value = String(v);
+    vRow.appendChild(vInput);
+    wrap.appendChild(vRow);
+
+    function refreshUI() {
+      cursor.style.left = (h * 100) + '%';
+      cursor.style.top = ((1 - s) * 100) + '%';
+      vInput.value = String(v);
+      updateSliderFill(vInput);
+      const rgb = hsvToRgb(h, s, v);
+      const css = rgbCss(rgb);
+      swatch.style.background = css;
+      swatch.style.setProperty('--swatch-glow', css);
+      vVal.textContent = v.toFixed(2);
+      if (isRgb) {
+        valEl.firstChild ? null : null;
+        // overwrite the text part of valEl (preserve swatch which is a sibling, not inside)
+        valEl.textContent = `${rgb[0].toFixed(2)} ${rgb[1].toFixed(2)} ${rgb[2].toFixed(2)}`;
+        valEl.appendChild(swatch);
+      } else {
+        valEl.textContent = `${h.toFixed(2)} ${s.toFixed(2)} ${v.toFixed(2)}`;
+        valEl.appendChild(swatch);
+      }
+    }
+    function pushUpstream() {
+      const out = isRgb ? hsvToRgb(h, s, v) : [h, s, v];
+      state.controls[name] = out;
+      queueControl(name, out);
+    }
+
+    function padUpdate(ev) {
+      const r = pad.getBoundingClientRect();
+      const x = (ev.clientX - r.left) / r.width;
+      const y = (ev.clientY - r.top) / r.height;
+      h = Math.max(0, Math.min(0.9999, x));
+      s = 1 - Math.max(0, Math.min(1, y));
+      refreshUI();
+      pushUpstream();
+    }
+    let padActive = false;
+    pad.addEventListener('pointerdown', (ev) => {
+      padActive = true;
+      try { pad.setPointerCapture(ev.pointerId); } catch {}
+      padUpdate(ev);
+      ev.preventDefault();
+    });
+    pad.addEventListener('pointermove', (ev) => { if (padActive) padUpdate(ev); });
+    pad.addEventListener('pointerup', () => { padActive = false; });
+    pad.addEventListener('pointercancel', () => { padActive = false; });
+
+    vInput.addEventListener('input', () => {
+      v = parseFloat(vInput.value);
+      refreshUI();
+      pushUpstream();
+    });
+
+    refreshUI();
+    return wrap;
+  }
+
+  // ---- throttled outbound ----
+  function queueControl(name, value) {
+    state.pendingControls[name] = value;
+    if (!state.rafScheduled) {
+      state.rafScheduled = true;
+      requestAnimationFrame(flushControls);
+    }
+  }
+  function flushControls() {
+    state.rafScheduled = false;
+    const out = state.pendingControls;
+    state.pendingControls = {};
+    if (Object.keys(out).length > 0) pb.setControls(out);
+  }
+
+  // ---- brightness ----
+  updateSliderFill(brSlider);
+  brVal.textContent = fmt(state.brightness);
+  brSlider.addEventListener('input', () => {
+    const v = parseFloat(brSlider.value);
+    state.brightness = v;
+    brVal.textContent = fmt(v);
+    updateSliderFill(brSlider);
+    pb.setBrightness(v); // brightness messages are small, no need to throttle further
+  });
+
+  // ---- pattern picker ----
+  patternSel.addEventListener('change', async () => {
+    const id = patternSel.value;
+    if (!id || id === state.activeId) return;
+    controlsEl.innerHTML = '<div class="empty">— loading —</div>';
+    try {
+      const r = await pb.activate(id);
+      state.activeId = id;
+      const p = state.patterns.find(x => x.id === id);
+      state.activeName = p ? p.name : id;
+      if (r.activeProgram && r.activeProgram.controls) {
+        state.controls = { ...r.activeProgram.controls };
+      } else {
+        const c = await pb.getControls(id);
+        state.controls = { ...(c.controls || {}) };
+      }
+      renderControls();
+      renderVibes();
+      renderPresets();
+    } catch (e) {
+      controlsEl.innerHTML = `<div class="empty">${escapeHtml(String(e.message || e))}</div>`;
+    }
+  });
+
+  // ---- presets ----
+  function renderVibes() {
+    vibesEl.innerHTML = '';
+    const have = new Set(Object.keys(state.controls));
+    for (const vibe of VIBES) {
+      const matches = Object.keys(vibe.controls).filter(k => have.has(k));
+      const btn = document.createElement('button');
+      btn.className = 'vibe';
+      btn.textContent = vibe.name;
+      if (matches.length === 0) {
+        btn.disabled = true;
+        btn.style.opacity = '0.3';
+        btn.style.cursor = 'not-allowed';
+      } else {
+        btn.addEventListener('click', () => applyVibe(vibe));
+      }
+      vibesEl.appendChild(btn);
+    }
+  }
+  function applyVibe(vibe) {
+    const out = {};
+    for (const [k, v] of Object.entries(vibe.controls)) {
+      if (state.controls[k] !== undefined) {
+        state.controls[k] = v;
+        out[k] = v;
+      }
+    }
+    if (Object.keys(out).length === 0) return;
+    pb.setControls(out);
+    renderControls();
+  }
+
+  function renderPresets() {
+    presetsEl.innerHTML = '';
+    if (!state.activeId) { presetCount.textContent = ''; return; }
+    const presets = Store.forPattern(state.activeId);
+    const names = Object.keys(presets);
+    presetCount.textContent = names.length ? `${names.length}` : '';
+    for (const name of names) {
+      const el = document.createElement('button');
+      el.className = 'preset';
+      el.innerHTML = `<span>${escapeHtml(name)}</span><span class="x">✕</span>`;
+      el.addEventListener('click', (ev) => {
+        if (ev.target.classList.contains('x')) {
+          ev.stopPropagation();
+          if (confirm(`Delete preset "${name}"?`)) {
+            Store.deletePreset(state.activeId, name);
+            renderPresets();
+          }
+          return;
+        }
+        applyPreset(presets[name]);
+        document.querySelectorAll('.preset.active').forEach(e => e.classList.remove('active'));
+        el.classList.add('active');
+      });
+      presetsEl.appendChild(el);
+    }
+    const add = document.createElement('button');
+    add.className = 'preset new';
+    add.textContent = '+ SAVE';
+    add.addEventListener('click', openSaveDialog);
+    presetsEl.appendChild(add);
+  }
+
+  function applyPreset(snap) {
+    if (!snap) return;
+    if (snap.controls) {
+      state.controls = { ...snap.controls };
+      renderControls();
+      pb.setControls(snap.controls);
+    }
+    if (typeof snap.brightness === 'number') {
+      state.brightness = snap.brightness;
+      brSlider.value = String(snap.brightness);
+      updateSliderFill(brSlider);
+      brVal.textContent = fmt(snap.brightness);
+      pb.setBrightness(snap.brightness);
+    }
+  }
+
+  function openSaveDialog() {
+    presetName.value = '';
+    presetDlg.showModal();
+    setTimeout(() => presetName.focus(), 30);
+  }
+  $('dlgCancel').addEventListener('click', () => presetDlg.close());
+  $('dlgSave').addEventListener('click', () => {
+    const name = presetName.value.trim();
+    if (!name || !state.activeId) { presetDlg.close(); return; }
+    Store.setPreset(state.activeId, name, {
+      controls: { ...state.controls },
+      brightness: state.brightness,
+    });
+    presetDlg.close();
+    renderPresets();
+  });
+  presetName.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); $('dlgSave').click(); }
+    if (e.key === 'Escape') { presetDlg.close(); }
+  });
+
+})();
+</script>
+</body>
+</html>
